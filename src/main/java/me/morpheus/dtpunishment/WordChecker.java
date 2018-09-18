@@ -1,5 +1,9 @@
 package me.morpheus.dtpunishment;
 
+import me.morpheus.dtpunishment.configuration.ChatConfig;
+import org.apache.commons.lang3.StringUtils;
+import org.spongepowered.api.Sponge;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -9,15 +13,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-
-import org.apache.commons.lang3.StringUtils;
-
-import com.google.inject.Inject;
-import com.google.inject.Singleton;
-
-import me.morpheus.dtpunishment.configuration.ChatConfig;
-import org.spongepowered.api.Sponge;
-import org.spongepowered.api.entity.living.player.Player;
 
 public class WordChecker {
 
@@ -92,16 +87,14 @@ public class WordChecker {
 	}
 
 	public boolean containsUppercase(String message) {
-
-		if (message.replaceAll("[\\W]", "").length() <= chatConfig.caps.minimum_length)
-			return false;
-
 		String[] words = message.split("\\s+");
 		int upper = 0;
 		int total = 0;
 
 		for (String word : words) {
-            if (Sponge.getServer().getPlayer(word).isPresent()) continue;
+			// Ignore player names
+			if (Sponge.getServer().getPlayer(word).isPresent()) continue;
+
 			String cleaned = word.replaceAll("[\\W]", "");
 			total += cleaned.length();
 
@@ -112,11 +105,13 @@ public class WordChecker {
 				if (Character.isUpperCase(cleaned.charAt(i)))
 					upper++;
 			}
-
 		}
+
+		if (total <= chatConfig.caps.minimum_length)
+			return false;
+
 		int max = (chatConfig.caps.percentage * total) / 100;
 		return upper > max;
-
 	}
 
 	public boolean isSpam(String message, UUID author) {
